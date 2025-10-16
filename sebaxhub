@@ -1,0 +1,143 @@
+--[[ 
+Sebaxhub: Hub arrastável com bordas arredondadas e 2 botões.
+Botão "Float é destivar float": ao pressionar Q, alterna entre criar/destruir plataformas sob o jogador.
+Executável em ambientes como Roblox Studio (LocalScript).
+--]]
+
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- GUI creation
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "Sebaxhub"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 150)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+mainFrame.BorderSizePixel = 0
+mainFrame.AnchorPoint = Vector2.new(0.5,0.5)
+mainFrame.Parent = screenGui
+
+-- Rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 18)
+corner.Parent = mainFrame
+
+-- Dragging logic
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Text = "Sebaxhub"
+title.Font = Enum.Font.FredokaOne
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextSize = 22
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1,0,0,36)
+title.Parent = mainFrame
+
+-- Button 1: Float é destivar float
+local floatBtn = Instance.new("TextButton")
+floatBtn.Text = "Float é destivar float"
+floatBtn.Font = Enum.Font.FredokaOne
+floatBtn.TextColor3 = Color3.fromRGB(255,255,255)
+floatBtn.TextSize = 18
+floatBtn.BackgroundColor3 = Color3.fromRGB(60,120,220)
+floatBtn.Size = UDim2.new(0.85,0,0,36)
+floatBtn.Position = UDim2.new(0.075,0,0.35,0)
+floatBtn.Parent = mainFrame
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 12)
+btnCorner.Parent = floatBtn
+
+-- Button 2: Exemplo (você pode trocar por outro)
+local btn2 = Instance.new("TextButton")
+btn2.Text = "Outro Botão"
+btn2.Font = Enum.Font.FredokaOne
+btn2.TextColor3 = Color3.fromRGB(255,255,255)
+btn2.TextSize = 18
+btn2.BackgroundColor3 = Color3.fromRGB(220,60,60)
+btn2.Size = UDim2.new(0.85,0,0,36)
+btn2.Position = UDim2.new(0.075,0,0.65,0)
+btn2.Parent = mainFrame
+
+local btn2Corner = Instance.new("UICorner")
+btn2Corner.CornerRadius = UDim.new(0, 12)
+btn2Corner.Parent = btn2
+
+-- Float Platform Logic
+local floatActive = false
+local platform = nil
+
+local function toggleFloat()
+    floatActive = not floatActive
+    if floatActive then
+        -- Cria plataforma sob o player
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            platform = Instance.new("Part")
+            platform.Size = Vector3.new(7,1,7)
+            platform.Anchored = true
+            platform.CanCollide = true
+            platform.Color = Color3.fromRGB(60,120,220)
+            platform.Material = Enum.Material.Neon
+            platform.Name = "SebaxhubFloat"
+            platform.Parent = workspace
+            platform.Position = character.HumanoidRootPart.Position - Vector3.new(0,3,0)
+            
+            -- Atualiza posição para seguir o player
+            platform:GetPropertyChangedSignal("Parent"):Connect(function()
+                platform = nil
+            end)
+            
+            -- Loop para atualizar (até desativar)
+            spawn(function()
+                while floatActive and platform and character and character:FindFirstChild("HumanoidRootPart") do
+                    platform.Position = character.HumanoidRootPart.Position - Vector3.new(0,3,0)
+                    wait(0.03)
+                end
+            end)
+        end
+        floatBtn.Text = "Desativar Float"
+    else
+        -- Remove plataforma
+        if platform then
+            platform:Destroy()
+            platform = nil
+        end
+        floatBtn.Text = "Float é destivar float"
+    end
+end
+
+-- Botão ativa/desativa
+floatBtn.MouseButton1Click:Connect(toggleFloat)
+
+-- Tecla Q ativa/desativahttps://github.com/Sebas571/Sebaxhub/tree/main
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.Q then
+        toggleFloat()
+    end
+end)
+
+-- Exemplo para segundo botão
+btn2.MouseButton1Click:Connect(function()
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Sebaxhub",
+        Text = "Segundo botão clicado!",
+        Duration = 2
+    })
+end)
+
+-- Protege de múltiplas execuções duplicadas
+if workspace:FindFirstChild("SebaxhubFloat") and not floatActive then
+    workspace.SebaxhubFloat:Destroy()
+end
+
+-- Fim do script Sebaxhub
